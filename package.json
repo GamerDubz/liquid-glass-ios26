@@ -1,0 +1,22 @@
+{
+  "name": "liquid-glass-ios26",
+  "version": "1.0.0",
+  "description": "Apple's iOS 26 Liquid Glass optics and physics navigation components recreated 1-to-1 for the web.",
+  "main": "public/index.html",
+  "scripts": {
+    "dev": "npx serve public -l 3000",
+    "start": "npx serve public -l 3000",
+    "build": "echo 'Static build ready in public/'"
+  },
+  "keywords": [
+    "liquid-glass",
+    "ios26",
+    "apple-design",
+    "glassmorphism",
+    "refraction",
+    "spring-physics",
+    "portfolio-showcase"
+  ],
+  "author": "",
+  "license": "MIT"
+}

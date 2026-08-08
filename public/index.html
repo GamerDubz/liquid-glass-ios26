@@ -1,0 +1,1637 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="Apple Liquid Glass (iOS 26 / WWDC 2025) web recreation. 5-layer optical material, physics spring engine, refractive SVG lens, floating glass tab bar, and interactive component suite.">
+<meta name="author" content="Portfolio Showcase">
+<meta property="og:title" content="Liquid Glass — iOS 26 Design System & Optics Showcase">
+<meta property="og:description" content="1-to-1 web recreation of Apple's iOS 26 Liquid Glass material with interruptible springs, rubber-banding, specular sheen, and SVG refraction lens.">
+<meta property="og:type" content="website">
+<title>Liquid Glass — iOS 26 Material & Optics Showcase</title>
+
+<script>
+/* Pre-paint theme: persisted preference wins, otherwise matches system preference */
+try {
+  var t = localStorage.getItem('lg-theme') ||
+          (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  document.documentElement.dataset.theme = t;
+} catch (e) {}
+</script>
+
+<style>
+/* ============================================================
+   Liquid Glass — Design Tokens & 5-Layer Optical Material System
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; }
+
+:root {
+  color-scheme: light;
+
+  /* ---- Core Palette ---- */
+  --bg: #eef2f8;
+  --ink: #1b1d24;
+  --ink-2: rgba(27, 29, 36, .64);
+  --ink-3: rgba(27, 29, 36, .38);
+  --divider: rgba(40, 50, 75, .10);
+
+  /* ---- Dynamic Accent (Spring-driven Hue) ---- */
+  --accent-h: 215;
+  --accent: hsl(var(--accent-h) 92% 58%);
+  --accent-strong: hsl(var(--accent-h) 92% 64%);
+
+  /* ---- Wallpaper Environments ---- */
+  --wp-aurora:
+    radial-gradient(40% 36% at 16% 20%, hsl(212 92% 64% / .55), transparent 70%),
+    radial-gradient(34% 32% at 84% 16%, hsl(282 84% 68% / .45), transparent 70%),
+    radial-gradient(42% 38% at 82% 84%, hsl(164 78% 52% / .38), transparent 70%),
+    radial-gradient(30% 28% at 18% 82%, hsl(28 96% 64% / .42), transparent 70%),
+    linear-gradient(180deg, #f2f5fa, #dfe6f1);
+
+  --wp-sunset:
+    radial-gradient(45% 40% at 20% 25%, hsl(340 90% 65% / .55), transparent 70%),
+    radial-gradient(40% 36% at 80% 20%, hsl(25 95% 65% / .50), transparent 70%),
+    radial-gradient(45% 42% at 75% 80%, hsl(270 85% 60% / .45), transparent 70%),
+    linear-gradient(180deg, #faf2f5, #e6dbe3);
+
+  --wp-cyber:
+    radial-gradient(45% 40% at 20% 20%, hsl(180 90% 50% / .45), transparent 70%),
+    radial-gradient(40% 35% at 80% 30%, hsl(300 85% 60% / .40), transparent 70%),
+    radial-gradient(45% 40% at 50% 85%, hsl(220 90% 55% / .45), transparent 70%),
+    linear-gradient(180deg, #0e1320, #060911);
+
+  --wp-emerald:
+    radial-gradient(45% 40% at 15% 20%, hsl(160 85% 55% / .50), transparent 70%),
+    radial-gradient(35% 35% at 85% 25%, hsl(195 85% 60% / .45), transparent 70%),
+    radial-gradient(40% 40% at 70% 85%, hsl(130 75% 50% / .40), transparent 70%),
+    linear-gradient(180deg, #f0f8f5, #d8e9e2);
+
+  --wp-gold:
+    radial-gradient(45% 40% at 20% 20%, hsl(42 95% 62% / .55), transparent 70%),
+    radial-gradient(35% 35% at 80% 25%, hsl(15 90% 62% / .45), transparent 70%),
+    radial-gradient(40% 40% at 65% 85%, hsl(330 85% 60% / .40), transparent 70%),
+    linear-gradient(180deg, #fdf8f0, #f2e6d5);
+
+  --wallpaper: var(--wp-aurora);
+
+  /* ---- Glass Material Tiers ---- */
+  --fill-regular: linear-gradient(150deg, rgba(255,255,255,.60), rgba(255,255,255,.28) 45%, rgba(255,255,255,.16));
+  --blur-regular: 22px;
+  --sat-regular: 175%;
+  --depth-regular: 0 1px 2px rgba(23,28,44,.05), 0 10px 30px -10px rgba(23,28,44,.25), 0 28px 60px -24px rgba(23,28,44,.20);
+
+  --fill-clear: linear-gradient(150deg, rgba(255,255,255,.36), rgba(255,255,255,.13) 55%, rgba(255,255,255,.08));
+  --blur-clear: 10px;
+  --sat-clear: 160%;
+  --depth-clear: 0 1px 3px rgba(23,28,44,.06), 0 6px 18px -8px rgba(23,28,44,.16);
+
+  --fill-frosted: linear-gradient(150deg, rgba(255,255,255,.72), rgba(255,255,255,.42) 45%, rgba(255,255,255,.30));
+  --blur-frosted: 42px;
+  --sat-frosted: 190%;
+  --depth-frosted: 0 1px 2px rgba(23,28,44,.06), 0 14px 38px -12px rgba(23,28,44,.30), 0 34px 80px -28px rgba(23,28,44,.26);
+
+  --rim: linear-gradient(160deg, rgba(255,255,255,.92), rgba(255,255,255,.32) 38%, rgba(255,255,255,.07) 66%, rgba(255,255,255,.30) 100%);
+  --pill-fill: linear-gradient(150deg, rgba(255,255,255,.88), rgba(255,255,255,.46) 55%, rgba(255,255,255,.34));
+
+  --tint-a: .045;
+  --r-lg: 24px;
+  --ease-out: cubic-bezier(.22, 1, .36, 1);
+  --ease-spring: cubic-bezier(.34, 1.56, .64, 1);
+  --ease-out-quint: cubic-bezier(.22, 1, .36, 1);
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0d1119;
+  --ink: #f4f6fa;
+  --ink-2: rgba(244,246,250,.68);
+  --ink-3: rgba(244,246,250,.42);
+  --divider: rgba(255,255,255,.09);
+
+  --wp-aurora:
+    radial-gradient(40% 36% at 16% 20%, hsl(212 90% 46% / .42), transparent 70%),
+    radial-gradient(34% 32% at 84% 16%, hsl(282 80% 52% / .36), transparent 70%),
+    radial-gradient(42% 38% at 82% 84%, hsl(164 72% 40% / .32), transparent 70%),
+    radial-gradient(30% 28% at 18% 82%, hsl(28 92% 48% / .34), transparent 70%),
+    linear-gradient(180deg, #10141d, #0a0d13);
+
+  --wp-cyber:
+    radial-gradient(45% 40% at 20% 20%, hsl(180 90% 40% / .45), transparent 70%),
+    radial-gradient(40% 35% at 80% 30%, hsl(300 85% 45% / .40), transparent 70%),
+    radial-gradient(45% 40% at 50% 85%, hsl(220 90% 45% / .45), transparent 70%),
+    linear-gradient(180deg, #070a12, #020408);
+
+  --fill-regular: linear-gradient(150deg, rgba(60,68,86,.74), rgba(42,48,62,.52) 45%, rgba(33,38,50,.44));
+  --fill-clear: linear-gradient(150deg, rgba(60,68,86,.38), rgba(42,48,62,.20) 55%, rgba(33,38,50,.16));
+  --fill-frosted: linear-gradient(150deg, rgba(70,79,100,.82), rgba(50,57,73,.62) 45%, rgba(40,46,59,.54));
+
+  --rim: linear-gradient(160deg, rgba(255,255,255,.36), rgba(255,255,255,.12) 38%, rgba(255,255,255,.03) 66%, rgba(255,255,255,.15) 100%);
+  --pill-fill: linear-gradient(150deg, rgba(255,255,255,.18), rgba(255,255,255,.07) 55%, rgba(255,255,255,.05));
+
+  --depth-regular: 0 1px 2px rgba(0,0,0,.5), 0 12px 34px -10px rgba(0,0,0,.6), 0 30px 70px -26px rgba(0,0,0,.55);
+  --depth-clear: 0 1px 2px rgba(0,0,0,.35), 0 6px 18px -8px rgba(0,0,0,.4);
+  --depth-frosted: 0 1px 2px rgba(0,0,0,.5), 0 16px 42px -12px rgba(0,0,0,.65), 0 38px 90px -30px rgba(0,0,0,.6);
+
+  --tint-a: .085;
+}
+
+/* ---- Base Setup ---- */
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; min-height: 100vh;
+  font: 400 15px var(--font);
+  color: var(--ink);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+::selection { background: color-mix(in srgb, var(--accent) 28%, transparent); }
+button, input, select { font-family: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+
+/* ---- Ambient Wallpaper & Blur Orbs ---- */
+.bg {
+  position: fixed; inset: 0; z-index: -3; pointer-events: none;
+  background: var(--wallpaper); background-size: cover;
+  filter: blur(46px) saturate(1.3);
+  transition: background .8s ease;
+}
+[data-theme="dark"] .bg { filter: blur(46px) saturate(1.2) brightness(.92); }
+
+.orb { position: fixed; border-radius: 50%; z-index: -2; pointer-events: none; will-change: transform; }
+.orb-a { width: 380px; height: 380px; left: 8%; top: 14%; background: hsl(212 92% 62% / .38); filter: blur(70px); }
+.orb-b { width: 460px; height: 460px; right: 6%; top: 50%; background: hsl(282 84% 66% / .32); filter: blur(80px); }
+[data-theme="dark"] .orb-a { background: hsl(212 90% 46% / .30); }
+[data-theme="dark"] .orb-b { background: hsl(282 80% 50% / .26); }
+
+.grain {
+  position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .05; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.6'/></svg>");
+}
+[data-theme="dark"] .grain { opacity: .07; }
+
+.veil { position: fixed; inset: 0; z-index: 100; pointer-events: none; opacity: 0; }
+
+/* ============================================================
+   5-LAYER LIQUID GLASS MATERIAL RECREATION
+   Layer 1: Frosted backdrop (-webkit-backdrop-filter)
+   Layer 2: Translucent Tint Fill + Dynamic Hue Wash
+   Layer 3: Hairline Rim Border (bright top-left -> soft bottom-right)
+   Layer 4: Specular Sheen (Radial glare + cursor tracking)
+   Layer 5: Refraction Lens (SVG feDisplacementMap + magnification)
+   ============================================================ */
+.lg {
+  position: relative;
+  border-radius: var(--r, var(--r-lg));
+  border: 1px solid transparent;
+  background:
+    linear-gradient(hsl(var(--accent-h) 95% 62% / var(--tint-a)), hsl(var(--accent-h) 95% 62% / var(--tint-a))) padding-box,
+    var(--fill, var(--fill-regular)) padding-box,
+    var(--rim) border-box;
+  -webkit-backdrop-filter: blur(var(--blur, var(--blur-regular))) saturate(var(--sat, var(--sat-regular)));
+  backdrop-filter: blur(var(--blur, var(--blur-regular))) saturate(var(--sat, var(--sat-regular)));
+  box-shadow: var(--depth, var(--depth-regular));
+}
+.lg::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: radial-gradient(110% 60% at 50% 118%, rgba(10,14,28,.12), transparent 60%);
+}
+[data-theme="dark"] .lg::before { background: radial-gradient(110% 60% at 50% 118%, rgba(0,0,0,.38), transparent 60%); }
+.lg::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background:
+    radial-gradient(140% 70% at 50% -20%, rgba(255,255,255,.55), rgba(255,255,255,0) 52%),
+    linear-gradient(90deg, rgba(255,255,255,.14), rgba(255,255,255,.03) 30%, rgba(255,255,255,.10) 70%, rgba(255,255,255,.02));
+}
+[data-theme="dark"] .lg::after {
+  background:
+    radial-gradient(140% 70% at 50% -20%, rgba(255,255,255,.15), rgba(255,255,255,0) 52%),
+    linear-gradient(90deg, rgba(255,255,255,.05), rgba(255,255,255,.01) 30%, rgba(255,255,255,.04) 70%, rgba(255,255,255,0));
+}
+
+.lg-refract {
+  position: absolute; inset: 0; z-index: 0; overflow: hidden;
+  border-radius: inherit; pointer-events: none;
+  opacity: var(--refract-o, .5);
+}
+.lg-refract::before {
+  content: ""; position: absolute; inset: -24px;
+  background: var(--wallpaper); background-size: cover; background-position: center;
+  filter: url(#lg-disp);
+  transform: scale(1.045) translate(var(--rx, 0px), var(--ry, 0px));
+  will-change: transform;
+}
+.lg > *:not(.lg-refract) { position: relative; z-index: 1; }
+
+.lg-clear {
+  --fill: var(--fill-clear); --blur: var(--blur-clear);
+  --sat: var(--sat-clear); --depth: var(--depth-clear);
+  --tint-a: .025;
+}
+[data-theme="dark"] .lg-clear { --tint-a: .05; }
+.lg-frosted {
+  --fill: var(--fill-frosted); --blur: var(--blur-frosted);
+  --sat: var(--sat-frosted); --depth: var(--depth-frosted);
+  --refract-o: .6;
+}
+
+/* ============================================================
+   Layout & Portfolio Showcase Elements
+   ============================================================ */
+.content {
+  max-width: 920px; margin: 0 auto;
+  padding: 148px 22px 160px;
+  position: relative; z-index: 1;
+}
+section { margin-bottom: 30px; }
+.sec-t {
+  font: 700 12.5px var(--font); letter-spacing: .09em; text-transform: uppercase;
+  color: var(--ink-3); margin: 36px 4px 14px; display: flex; align-items: center; gap: 8px;
+}
+.sec-t::after { content: ""; flex: 1; height: 1px; background: var(--divider); }
+
+.grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 20px; }
+.grid > .lg-in, .grid > .card { height: 100%; }
+.two { display: grid; grid-template-columns: 1.15fr .85fr; gap: 20px; align-items: start; }
+.foot { text-align: center; color: var(--ink-3); font-size: 13px; margin-top: 50px; line-height: 1.6; }
+
+/* Portfolio Header Badge Bar */
+.portfolio-badge-bar {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px;
+}
+.badge-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 12px; border-radius: 999px; font: 600 11.5px var(--font);
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+}
+.badge-pill.green {
+  background: color-mix(in srgb, #34c759 15%, transparent);
+  color: #34c759; border-color: color-mix(in srgb, #34c759 25%, transparent);
+}
+.badge-pill.purple {
+  background: color-mix(in srgb, #af52de 15%, transparent);
+  color: #af52de; border-color: color-mix(in srgb, #af52de 25%, transparent);
+}
+
+/* Hero Section */
+.hero-card { padding: 40px 38px; }
+.eyebrow {
+  font: 700 11.5px var(--font); letter-spacing: .14em; text-transform: uppercase;
+  color: var(--accent); margin: 0 0 10px;
+}
+.hero-card h2 { margin: 0 0 14px; font: 800 40px var(--font); letter-spacing: -0.035em; line-height: 1.1; }
+.hero-copy { margin: 0 0 28px; max-width: 54ch; font-size: 16px; line-height: 1.6; color: var(--ink-2); }
+
+/* Top Nav Bar */
+.topbar {
+  position: fixed; top: max(14px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%);
+  width: min(840px, calc(100% - 28px)); z-index: 40;
+  --r: 26px; padding: 16px 20px 14px;
+  transition: box-shadow .35s ease;
+}
+.topbar.scrolled { box-shadow: 0 14px 38px -14px rgba(23,28,44,.34), 0 30px 70px -30px rgba(23,28,44,.3); }
+[data-theme="dark"] .topbar.scrolled { box-shadow: 0 14px 38px -14px rgba(0,0,0,.6), 0 30px 70px -30px rgba(0,0,0,.55); }
+.tb-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.tb-row2 { margin-top: 12px; }
+.tb-titles { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.large-title {
+  margin: 0; font: 800 27px var(--font); letter-spacing: -0.025em;
+  transform-origin: left center; will-change: transform; white-space: nowrap;
+}
+.subtitle { margin: 0; font: 500 13.5px var(--font); color: var(--ink-3); transition: opacity .25s ease; }
+.tb-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+.ib {
+  width: 44px; height: 44px; border-radius: 12px; border: 1px solid transparent;
+  background:
+    linear-gradient(color-mix(in srgb, var(--ink) 6%, transparent), color-mix(in srgb, var(--ink) 6%, transparent)) padding-box,
+    var(--rim) border-box;
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  color: var(--ink); display: grid; place-items: center; cursor: pointer;
+  transition: transform .35s var(--ease-spring), background-color .2s ease;
+}
+.ib:hover { background: linear-gradient(color-mix(in srgb, var(--ink) 11%, transparent), color-mix(in srgb, var(--ink) 11%, transparent)) padding-box, var(--rim) border-box; }
+.ib:active { transform: scale(.85); }
+
+.avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: linear-gradient(135deg, hsl(var(--accent-h) 92% 58%), #ff6bb3);
+  color: #fff; display: grid; place-items: center; font: 700 14px var(--font);
+  box-shadow: 0 2px 8px rgba(123,108,255,.4), inset 0 1px 0 rgba(255,255,255,.5);
+}
+
+.search {
+  flex: 1; display: flex; align-items: center; gap: 9px;
+  height: 42px; padding: 0 14px; border-radius: 14px; border: 1px solid transparent;
+  background:
+    linear-gradient(color-mix(in srgb, var(--ink) 5%, transparent), color-mix(in srgb, var(--ink) 5%, transparent)) padding-box,
+    var(--rim) border-box;
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  color: var(--ink-2); cursor: pointer;
+}
+.search input {
+  flex: 1; min-width: 0; border: 0; outline: none; background: none;
+  font: 500 14.5px var(--font); color: var(--ink);
+}
+.search input::placeholder { color: var(--ink-3); }
+.kbd {
+  font: 600 10.5px var(--font); letter-spacing: .03em; color: var(--ink-3);
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  border: .5px solid color-mix(in srgb, var(--ink) 14%, transparent);
+  border-radius: 6px; padding: 2px 6px; white-space: nowrap;
+}
+.search .kbd { margin-left: auto; flex-shrink: 0; }
+
+/* Floating Tab Bar (iOS 26 Style) */
+.tabbar {
+  position: fixed; left: 50%; bottom: max(16px, env(safe-area-inset-bottom)); transform: translateX(-50%);
+  z-index: 50; display: flex; gap: 2px; padding: 8px;
+  --r: 32px; --refract-o: .55;
+}
+.pill {
+  position: absolute; top: 8px; bottom: 8px; left: 0; z-index: 1;
+  width: 72px; border-radius: 24px;
+  background: var(--pill-fill);
+  box-shadow: 0 6px 20px -8px rgba(23,28,44,.4), inset 0 1px 0 rgba(255,255,255,.85), inset 0 0 0 .5px rgba(255,255,255,.4);
+  will-change: transform, width;
+}
+[data-theme="dark"] .pill {
+  box-shadow: 0 6px 20px -8px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.22), inset 0 0 0 .5px rgba(255,255,255,.1);
+}
+.tab {
+  position: relative; z-index: 2; flex-shrink: 0;
+  width: 72px; height: 56px; border: 0; background: none;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  font: 600 10.5px var(--font); letter-spacing: .01em;
+  color: var(--ink-2); cursor: pointer;
+  -webkit-tap-highlight-color: transparent; transition: transform .35s var(--ease-spring), color .3s var(--ease-out);
+}
+.tab:active { transform: scale(.9); }
+.tab[aria-selected="true"] { color: var(--ink); }
+.tab .ico {
+  border-radius: 12px; width: 34px; height: 26px;
+  display: grid; place-items: center;
+  transition: transform .45s var(--ease-spring), background-color .25s ease;
+}
+.tab[aria-selected="true"] .ico {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+  transform: translateY(-1px) scale(1.1);
+}
+
+/* Interactive Optics Inspector Panel */
+.optics-panel { padding: 26px 28px; }
+.optics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-top: 16px; }
+.optics-item { display: flex; flex-direction: column; gap: 6px; }
+.optics-item label { font: 600 13px var(--font); color: var(--ink-2); display: flex; justify-content: space-between; }
+.optics-item span { color: var(--accent); font-weight: 700; }
+
+/* CSS Snippet Copy Box */
+.code-box {
+  position: relative; margin-top: 16px; padding: 18px 20px; border-radius: 16px;
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
+  border: 1px solid var(--divider); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 13px; line-height: 1.6; color: var(--ink); overflow-x: auto;
+}
+.code-box pre { margin: 0; }
+.copy-btn {
+  position: absolute; top: 12px; right: 12px; padding: 6px 12px; border-radius: 8px;
+  font: 600 12px var(--font); border: 0; background: var(--accent); color: #fff; cursor: pointer;
+  transition: transform 160ms ease, opacity 200ms ease;
+}
+.copy-btn:active { transform: scale(.94); }
+
+/* Buttons */
+.btn {
+  position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border: 0; cursor: pointer; border-radius: 14px; padding: 12px 20px;
+  font: 600 14.5px var(--font); color: var(--ink); text-decoration: none;
+  transition: transform .3s var(--ease-spring), background-color .2s ease, color .2s ease, box-shadow .2s ease;
+  -webkit-tap-highlight-color: transparent; user-select: none;
+}
+.btn:active { transform: scale(.965); }
+.btn-primary {
+  color: #fff;
+  background: linear-gradient(180deg, var(--accent-strong), var(--accent));
+  box-shadow: 0 10px 24px -10px hsl(var(--accent-h) 92% 50% / .55), inset 0 1px 0 rgba(255,255,255,.35), inset 0 -1px 0 rgba(0,0,0,.12);
+  overflow: hidden;
+}
+.btn-primary::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(105deg, transparent 42%, rgba(255,255,255,.45) 50%, transparent 58%);
+  transform: translateX(-130%); transition: transform .65s var(--ease-out);
+}
+.btn-primary:hover::after { transform: translateX(130%); }
+.btn-glass {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(color-mix(in srgb, var(--ink) 6%, transparent), color-mix(in srgb, var(--ink) 6%, transparent)) padding-box,
+    var(--rim) border-box;
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  box-shadow: 0 4px 14px -8px rgba(23,28,44,.3);
+}
+.btn-glass:hover { background: linear-gradient(color-mix(in srgb, var(--ink) 10%, transparent), color-mix(in srgb, var(--ink) 10%, transparent)) padding-box, var(--rim) border-box; }
+.btn-soft {
+  background: color-mix(in srgb, var(--ink) 7%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
+}
+.btn-soft:hover { background: color-mix(in srgb, var(--ink) 11%, transparent); }
+.btn-danger {
+  color: #ff453a;
+  background: color-mix(in srgb, #ff453a 12%, transparent);
+  border: 1px solid color-mix(in srgb, #ff453a 22%, transparent);
+}
+.btn-danger:hover { background: color-mix(in srgb, #ff453a 18%, transparent); }
+.btnrow { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+
+/* Wallpaper Switcher Chips */
+.wp-picker { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.wp-chip {
+  padding: 8px 16px; border-radius: 12px; font: 600 13px var(--font);
+  border: 1px solid var(--divider); background: color-mix(in srgb, var(--ink) 4%, transparent);
+  color: var(--ink-2); cursor: pointer; transition: all .2s ease;
+}
+.wp-chip.active, .wp-chip:hover {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--ink); border-color: var(--accent);
+}
+
+/* Segmented Control */
+.seg { position: relative; display: inline-flex; padding: 4px; gap: 2px; --r: 14px; }
+.seg-ind {
+  position: absolute; top: 4px; bottom: 4px; left: 0; z-index: 0; width: 0;
+  border-radius: 10px; background: var(--pill-fill);
+  box-shadow: 0 2px 10px -3px rgba(23,28,44,.3), inset 0 1px 0 rgba(255,255,255,.9), inset 0 0 0 .5px rgba(255,255,255,.4);
+  will-change: transform, width;
+}
+.seg-btn {
+  position: relative; z-index: 1; border: 0; background: none;
+  padding: 9px 18px; min-height: 44px; border-radius: 10px;
+  font: 600 13.5px var(--font); color: var(--ink-2); cursor: pointer;
+  transition: color .2s ease; user-select: none; -webkit-tap-highlight-color: transparent;
+}
+.seg-btn[aria-selected="true"] { color: var(--ink); }
+
+/* Toggle Switch */
+.tgl {
+  position: relative; width: 48px; height: 28px; border-radius: 999px; border: 0;
+  background: color-mix(in srgb, var(--ink) 22%, transparent);
+  cursor: pointer; flex-shrink: 0; padding: 0;
+  transition: background-color .25s var(--ease-out), transform .35s var(--ease-spring);
+  -webkit-tap-highlight-color: transparent;
+}
+.tgl:active { transform: scale(.93); }
+.tgl[aria-checked="true"] { background: #34c759; }
+.tgl .knob {
+  position: absolute; top: 2px; left: 2px; width: 24px; height: 24px; border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,.28), inset 0 .5px 0 rgba(255,255,255,.9);
+  transition: transform .25s var(--ease-out);
+}
+.tgl[aria-checked="true"] .knob { transform: translateX(20px); }
+
+/* Slider */
+.slider {
+  position: relative; flex: 1; height: 28px; display: flex; align-items: center;
+  cursor: pointer; touch-action: none;
+}
+.track {
+  flex: 1; height: 6px; border-radius: 3px; overflow: hidden;
+  background: color-mix(in srgb, var(--ink) 14%, transparent);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.08);
+}
+.fill {
+  height: 100%; border-radius: 3px; width: 65%;
+  background: linear-gradient(90deg, var(--accent-strong), var(--accent));
+}
+.thumb {
+  position: absolute; top: 50%; left: 65%; width: 26px; height: 26px;
+  transform: translate(-50%, -50%); border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,.28), inset 0 .5px 0 rgba(255,255,255,.9), inset 0 0 0 .5px rgba(0,0,0,.05);
+  transition: transform .2s var(--ease-spring), box-shadow .25s ease;
+  pointer-events: none;
+}
+.slider.drag .thumb {
+  transform: translate(-50%, -50%) scale(1.15);
+  box-shadow: 0 4px 14px rgba(0,0,0,.32), inset 0 .5px 0 rgba(255,255,255,.9), 0 0 0 6px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+/* 3D Tilt Cards with Specular Glare */
+.card { padding: 24px; }
+.tilt {
+  transform: perspective(1100px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) scale3d(var(--zs, 1), var(--zs, 1), 1);
+  will-change: transform;
+}
+.glare {
+  position: absolute; inset: 0; z-index: 3; border-radius: inherit; pointer-events: none;
+  background: radial-gradient(46% 46% at var(--gx, 50%) var(--gy, 50%), rgba(255,255,255,.34), rgba(255,255,255,0) 70%);
+  opacity: 0; transition: opacity .45s ease;
+}
+.tilt:hover .glare { opacity: 1; }
+
+@media (hover: hover) and (pointer: fine) {
+  .card, .lg-in { transition: transform .5s var(--ease-out-quint), box-shadow .5s ease; }
+  .card:not(.tilt):hover, .grid .lg-in:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 26px 52px -22px rgba(23,28,44,.38), 0 10px 24px -12px rgba(23,28,44,.25);
+  }
+  [data-theme="dark"] .card:not(.tilt):hover,
+  [data-theme="dark"] .grid .lg-in:hover {
+    box-shadow: 0 26px 52px -22px rgba(0,0,0,.65), 0 10px 24px -12px rgba(0,0,0,.45);
+  }
+}
+
+.art-wrap { border-radius: 18px; overflow: hidden; margin: 0 0 16px; }
+.art {
+  position: relative; height: 190px;
+  background:
+    radial-gradient(70% 90% at 18% 12%, rgba(255,255,255,.35), transparent 55%),
+    linear-gradient(135deg, hsl(265 85% 62%), hsl(215 90% 55%) 45%, hsl(160 80% 50%));
+  display: grid; place-items: center;
+}
+[data-theme="dark"] .art { filter: brightness(.88) saturate(1.12); }
+.play {
+  width: 58px; height: 58px; border-radius: 50%; border: 0; cursor: pointer;
+  background: rgba(255,255,255,.94); color: #14161c;
+  display: grid; place-items: center;
+  box-shadow: 0 10px 30px -8px rgba(0,0,0,.45), inset 0 1px 0 #fff;
+  transition: transform 160ms var(--ease-out);
+}
+.play:active { transform: scale(.92); }
+.play svg { width: 22px; height: 22px; margin-left: 2px; }
+.m-t { display: block; font: 700 16.5px var(--font); letter-spacing: -.01em; }
+.m-s { display: block; font: 500 13px var(--font); color: var(--ink-3); margin-top: 2px; }
+.prog { height: 4px; border-radius: 999px; background: color-mix(in srgb, var(--ink) 14%, transparent); overflow: hidden; margin-top: 14px; }
+.prog i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, hsl(var(--accent-h) 92% 64%), hsl(var(--accent-h) 92% 52%)); }
+
+.act-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.act-head b { font: 700 15.5px var(--font); }
+.act-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; font-size: 14px; }
+.act-row svg { color: var(--accent); flex-shrink: 0; }
+.act-row > span { flex: 1; color: var(--ink-2); }
+.act-row b { font-weight: 650; }
+.act-row .bar { width: 68px; height: 6px; border-radius: 3px; background: color-mix(in srgb, var(--ink) 14%, transparent); overflow: hidden; flex-shrink: 0; }
+.act-row .bar i { display: block; height: 100%; border-radius: inherit; background: var(--accent); }
+
+/* Settings List */
+.list { padding: 6px 0; --r: 20px; overflow: hidden; }
+.row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 18px; min-height: 58px;
+  transition: background-color .2s ease, transform .3s var(--ease-spring);
+}
+.row:hover { background: color-mix(in srgb, var(--ink) 3.5%, transparent); }
+.row:active { background: color-mix(in srgb, var(--ink) 7%, transparent); }
+.row + .row { border-top: 1px solid var(--divider); }
+.row .ic {
+  width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
+  display: grid; place-items: center; color: var(--ic);
+  background: color-mix(in srgb, var(--ic) 16%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.35);
+}
+.rw { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; text-align: left; }
+.rw b { font: 600 14.5px var(--font); }
+.rw small { font: 500 12.5px var(--font); color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bdg {
+  padding: 3px 9px; border-radius: 999px; flex-shrink: 0;
+  font: 600 11.5px var(--font); color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+}
+.bdg-red { color: #ff453a; background: color-mix(in srgb, #ff453a 15%, transparent); }
+
+/* Overlays: Scrim, Menu, Sheet, Command Palette, Toasts, Tooltip */
+.scrim {
+  position: fixed; inset: 0; z-index: 60;
+  background: rgba(8, 10, 18, .34);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  opacity: 0; pointer-events: none;
+  transition: opacity .35s ease;
+}
+.scrim:not([data-closed]) { opacity: 1; pointer-events: auto; }
+
+.menu {
+  position: fixed; z-index: 65; min-width: 232px; padding: 6px; --r: 16px;
+  transform-origin: var(--ox, 0px) var(--oy, 0px);
+  transition: opacity 200ms var(--ease-out), transform 200ms var(--ease-out);
+}
+.menu[data-closed] { opacity: 0; transform: scale(.95); pointer-events: none; }
+.mi {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  border: 0; background: none; padding: 10px 12px; border-radius: 10px;
+  font: 500 14px var(--font); color: var(--ink); cursor: pointer; text-align: left;
+  transition: background-color .15s ease;
+}
+.mi:hover { background: color-mix(in srgb, var(--ink) 7%, transparent); }
+.mi:active { background: color-mix(in srgb, var(--ink) 13%, transparent); }
+.mi.danger { color: #ff453a; }
+.mi kbd { margin-left: auto; }
+.mi-sep { height: 1px; margin: 6px 8px; background: var(--divider); }
+
+.sheet {
+  position: fixed; left: 50%; bottom: 0; z-index: 70;
+  width: min(640px, 100%); max-height: 84vh; overflow: auto;
+  --r: 30px 30px 0 0; --refract-o: .5;
+  padding: 0 24px 26px; will-change: transform;
+}
+.grab { padding: 12px 0 8px; cursor: grab; touch-action: none; }
+.grab:active { cursor: grabbing; }
+.handle { width: 40px; height: 5px; border-radius: 999px; margin: 0 auto; background: color-mix(in srgb, var(--ink) 30%, transparent); }
+.s-t { margin: 8px 0 8px; font: 800 24px var(--font); letter-spacing: -0.02em; }
+.s-c { margin: 0 0 18px; font-size: 14.5px; line-height: 1.55; color: var(--ink-2); }
+.s-body { padding-bottom: 6px; }
+.s-done { width: 100%; margin-top: 18px; }
+.chev { color: var(--ink-3); }
+
+.palette {
+  position: fixed; top: max(110px, 12vh); left: 50%; z-index: 80;
+  width: min(560px, calc(100% - 28px)); --r: 22px; padding: 8px;
+  transform: translateX(-50%);
+  transition: opacity 220ms var(--ease-out), transform 220ms var(--ease-out);
+}
+.palette[data-closed] { opacity: 0; transform: translateX(-50%) scale(.98); pointer-events: none; }
+.pal-in {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 14px; border-bottom: 1px solid var(--divider); color: var(--ink-2);
+}
+.pal-in input {
+  flex: 1; min-width: 0; border: 0; outline: none; background: none;
+  font: 500 15px var(--font); color: var(--ink);
+}
+.pal-in input::placeholder { color: var(--ink-3); }
+.pal-list { padding: 6px; max-height: 300px; overflow-y: auto; }
+.pi {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  padding: 10px 12px; border: 0; background: none; border-radius: 10px;
+  font: 500 14px var(--font); color: var(--ink); cursor: pointer; text-align: left;
+  transition: background-color .15s ease;
+}
+.pi:hover, .pi[aria-selected="true"] { background: color-mix(in srgb, var(--accent) 16%, transparent); }
+.pi:active { background: color-mix(in srgb, var(--accent) 26%, transparent); }
+.pi.empty { justify-content: center; color: var(--ink-3); font-style: italic; }
+.pal-foot { display: flex; gap: 16px; padding: 10px 14px 4px; font: 600 10.5px var(--font); letter-spacing: .05em; color: var(--ink-3); }
+
+.toasts {
+  position: fixed; bottom: calc(96px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%);
+  z-index: 90; display: flex; flex-direction: column; align-items: center; gap: 8px;
+  pointer-events: none; width: max-content; max-width: calc(100% - 32px);
+}
+.toast {
+  display: flex; align-items: center; gap: 11px;
+  padding: 11px 16px; --r: 16px; --fill: var(--fill-frosted);
+  opacity: 0; transform: translateY(16px) scale(.96);
+  transition: opacity .4s var(--ease-out), transform .45s var(--ease-spring);
+}
+.toast.in { opacity: 1; transform: none; }
+.toast .t-ic { color: var(--accent); }
+.toast b { display: block; font: 600 13.5px var(--font); }
+.toast small { display: block; font: 500 12px var(--font); color: var(--ink-3); margin-top: 1px; }
+
+.tip {
+  position: fixed; z-index: 75; pointer-events: none;
+  transform: translate(-50%, -100%);
+}
+.tip-in {
+  display: block; padding: 6px 10px; border-radius: 9px;
+  background: rgba(38, 42, 54, .94); color: #fff;
+  font: 600 12.5px var(--font); white-space: nowrap;
+  box-shadow: 0 6px 20px -6px rgba(0,0,0,.4);
+  opacity: 0; transform: scale(.94); transform-origin: 50% 100%;
+  transition: opacity 125ms var(--ease-out), transform 125ms var(--ease-out);
+}
+.tip:not([data-closed]) .tip-in { opacity: 1; transform: scale(1); }
+
+/* SVG Icons */
+svg.ic {
+  width: 22px; height: 22px; flex-shrink: 0;
+  fill: none; stroke: currentColor; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round; pointer-events: none;
+}
+.ic-s { width: 17px; height: 17px; }
+.ic-slider-knob { fill: var(--bg); stroke: none; }
+
+.defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+/* Responsive adjustments */
+@media (max-width: 720px) {
+  .grid, .two { grid-template-columns: 1fr; }
+  .content { padding: 138px 16px 140px; }
+  .hero-card { padding: 28px 24px; }
+  .hero-card h2 { font-size: 32px; }
+  .tab, .tabbar .tab { width: 62px; }
+  .tabbar { bottom: max(10px, env(safe-area-inset-bottom)); padding: 7px; }
+  .pill { top: 7px; bottom: 7px; border-radius: 22px; }
+  .toasts { bottom: calc(88px + env(safe-area-inset-bottom)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+  html { scroll-behavior: auto; }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .lg-refract { display: none; }
+  :root {
+    --fill-regular: linear-gradient(150deg, rgba(255,255,255,.94), rgba(255,255,255,.88));
+    --fill-clear: linear-gradient(150deg, rgba(255,255,255,.82), rgba(255,255,255,.74));
+    --fill-frosted: linear-gradient(150deg, rgba(255,255,255,.96), rgba(255,255,255,.92));
+    --blur-regular: 6px; --blur-clear: 4px; --blur-frosted: 8px;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="bg" id="wallpaperBg" aria-hidden="true"></div>
+<div class="orb orb-a" aria-hidden="true"></div>
+<div class="orb orb-b" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+<div class="veil" id="veil" aria-hidden="true"></div>
+
+<!-- Top Navigation Bar -->
+<header class="topbar lg" id="topbar">
+  <div class="lg-refract" aria-hidden="true"></div>
+  <div class="tb-row">
+    <div class="tb-titles">
+      <h1 class="large-title" id="largeTitle">Liquid Glass</h1>
+      <p class="subtitle" id="subtitle">iOS 26 optics & physics &middot; portfolio showcase</p>
+    </div>
+    <div class="tb-actions">
+      <button class="ib" id="paletteBtn" data-tip="Command palette (⌘K)" aria-label="Command palette">
+        <svg class="ic" aria-hidden="true"><use href="#i-cmd"/></svg>
+      </button>
+      <button class="ib" id="themeBtn" data-tip="Toggle light/dark appearance" aria-label="Toggle appearance">
+        <svg class="ic sun-ic" aria-hidden="true"><use href="#i-sun"/></svg>
+        <svg class="ic moon-ic" hidden aria-hidden="true"><use href="#i-moon"/></svg>
+      </button>
+      <a href="https://github.com" target="_blank" rel="noopener" class="ib" data-tip="View GitHub Repository" aria-label="GitHub Repository">
+        <svg class="ic" aria-hidden="true"><use href="#i-github"/></svg>
+      </a>
+      <span class="avatar" aria-hidden="true">iOS</span>
+    </div>
+  </div>
+  <div class="tb-row tb-row2">
+    <div class="search" id="searchTrigger" role="button" tabindex="0">
+      <svg class="ic" aria-hidden="true"><use href="#i-search"/></svg>
+      <input type="text" id="searchInput" placeholder="Search optics, components, physics..." aria-label="Search components" readonly>
+      <kbd class="kbd">⌘K</kbd>
+    </div>
+  </div>
+</header>
+
+<main class="content">
+  <!-- Portfolio Hero -->
+  <section class="hero lg-in">
+    <div class="hero-card lg tilt" data-tilt>
+      <div class="lg-refract" aria-hidden="true"></div>
+      <div class="glare" aria-hidden="true"></div>
+      
+      <div class="portfolio-badge-bar">
+        <span class="badge-pill">iOS 26 Material</span>
+        <span class="badge-pill green">Refractive Optics</span>
+        <span class="badge-pill purple">Interruptible Springs</span>
+      </div>
+
+      <h2>Apple Liquid Glass.</h2>
+      <p class="hero-copy">
+        Translucent, refractive, and adaptive interface material. Rather than simply blurring backdrop content, Liquid Glass bends light like an optical lens, casts dynamic specular highlights as you move, and spring-washes its accent tint based on active elements.
+      </p>
+      
+      <div class="btnrow">
+        <button class="btn btn-primary" id="heroPrimary">Try Toast Feedback</button>
+        <button class="btn btn-glass" id="heroSheet">Present Spring Sheet</button>
+        <button class="btn btn-soft" id="heroOpticsScroll">Inspect Optics</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Optics & Environment Inspector -->
+  <h3 class="sec-t" id="opticsHeader">Material Optics & Environment Switcher</h3>
+  <section class="optics-panel lg">
+    <div class="lg-refract" aria-hidden="true"></div>
+    <p style="margin:0 0 12px; font-weight:600; color:var(--ink);">Environment Background Wallpaper</p>
+    <div class="wp-picker">
+      <button class="wp-chip active" data-wp="wp-aurora">Aurora Blur</button>
+      <button class="wp-chip" data-wp="wp-sunset">Sunset Glass</button>
+      <button class="wp-chip" data-wp="wp-cyber">Deep Cyber</button>
+      <button class="wp-chip" data-wp="wp-emerald">Emerald Frost</button>
+      <button class="wp-chip" data-wp="wp-gold">Solar Gold</button>
+    </div>
+
+    <div class="optics-grid">
+      <div class="optics-item">
+        <label>Backdrop Blur <span id="blurVal">22px</span></label>
+        <div class="slider" id="blurSlider" role="slider" aria-valuemin="0" aria-valuemax="60" aria-valuenow="22" tabindex="0">
+          <div class="track"><div class="fill" style="width: 36%"></div></div>
+          <div class="thumb" style="left: 36%"></div>
+        </div>
+      </div>
+
+      <div class="optics-item">
+        <label>Backdrop Saturation <span id="satVal">175%</span></label>
+        <div class="slider" id="satSlider" role="slider" aria-valuemin="100" aria-valuemax="250" aria-valuenow="175" tabindex="0">
+          <div class="track"><div class="fill" style="width: 50%"></div></div>
+          <div class="thumb" style="left: 50%"></div>
+        </div>
+      </div>
+
+      <div class="optics-item">
+        <label>Specular Glare Sheen <span id="glareVal">55%</span></label>
+        <div class="slider" id="glareSlider" role="slider" aria-valuemin="0" aria-valuemax="100" aria-valuenow="55" tabindex="0">
+          <div class="track"><div class="fill" style="width: 55%"></div></div>
+          <div class="thumb" style="left: 55%"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Code Snippet Copy Exporter -->
+  <h3 class="sec-t">Developer CSS Recipe</h3>
+  <section class="lg" style="padding: 22px 24px;">
+    <div class="lg-refract" aria-hidden="true"></div>
+    <p style="margin: 0 0 8px; font-weight: 700;">The 5-Layer Liquid Glass CSS Spec</p>
+    <p style="margin: 0 0 14px; font-size: 14px; color: var(--ink-2);">Copy this production-ready 5-layer optical glass CSS definition into your web applications.</p>
+    <div class="code-box">
+      <button class="copy-btn" id="copyCssBtn">Copy CSS</button>
+      <pre><code>.lg {
+  position: relative;
+  border-radius: 24px;
+  border: 1px solid transparent;
+  background:
+    linear-gradient(hsl(var(--accent-h) 95% 62% / .045), hsl(var(--accent-h) 95% 62% / .045)) padding-box,
+    linear-gradient(150deg, rgba(255,255,255,.60), rgba(255,255,255,.28) 45%, rgba(255,255,255,.16)) padding-box,
+    linear-gradient(160deg, rgba(255,255,255,.92), rgba(255,255,255,.32) 38%, rgba(255,255,255,.07) 66%, rgba(255,255,255,.30) 100%) border-box;
+  -webkit-backdrop-filter: blur(22px) saturate(175%);
+  backdrop-filter: blur(22px) saturate(175%);
+  box-shadow: 0 1px 2px rgba(23,28,44,.05), 0 10px 30px -10px rgba(23,28,44,.25), 0 28px 60px -24px rgba(23,28,44,.20);
+}</code></pre>
+    </div>
+  </section>
+
+  <!-- Interactive Component Gallery -->
+  <h3 class="sec-t">Interactive Components Gallery</h3>
+  <section class="grid">
+    <div class="card lg tilt" data-tilt>
+      <div class="lg-refract" aria-hidden="true"></div>
+      <div class="glare" aria-hidden="true"></div>
+      <div class="art-wrap">
+        <div class="art">
+          <button class="play" id="playBtn" aria-label="Play Aurora">
+            <svg class="ic" aria-hidden="true"><use href="#i-play"/></svg>
+          </button>
+        </div>
+      </div>
+      <span class="m-t">Aurora &middot; iOS 26 Track</span>
+      <span class="m-s">Liquid Glass Spatial Audio</span>
+      <div class="prog" aria-hidden="true"><i style="width:64%"></i></div>
+    </div>
+
+    <div class="card lg tilt" data-tilt>
+      <div class="glare" aria-hidden="true"></div>
+      <div class="act-head"><b>System Health</b><span class="bdg">+14%</span></div>
+      <div class="act-row"><svg class="ic" aria-hidden="true"><use href="#i-steps"/></svg><span>Framerate</span><b>60 FPS</b><span class="bar" aria-hidden="true"><i style="width:95%"></i></span></div>
+      <div class="act-row"><svg class="ic" aria-hidden="true"><use href="#i-heart"/></svg><span>Spring Solver</span><b>Interruptible</b><span class="bar" aria-hidden="true"><i style="width:85%"></i></span></div>
+      <div class="act-row"><svg class="ic" aria-hidden="true"><use href="#i-sleep"/></svg><span>Refraction</span><b>SVG Lens</b><span class="bar" aria-hidden="true"><i style="width:90%"></i></span></div>
+    </div>
+  </section>
+
+  <!-- Controls Panel -->
+  <section class="card lg" id="controls">
+    <div class="lg-refract" aria-hidden="true"></div>
+    <h3 style="margin:0 0 14px; font-size:17px; font-weight:700;">Dynamic Accent Wash & Controls</h3>
+    
+    <div style="display:flex; align-items:center; gap:18px; margin-bottom:18px;">
+      <span style="width:140px; font-weight:600; color:var(--ink-2);">Accent Tint</span>
+      <div class="seg lg-clear" id="seg" role="tablist" aria-label="Accent color">
+        <div class="seg-ind" id="segInd" aria-hidden="true"></div>
+        <button class="seg-btn" role="tab" aria-selected="true" data-accent="215">Blue</button>
+        <button class="seg-btn" role="tab" aria-selected="false" data-accent="275">Violet</button>
+        <button class="seg-btn" role="tab" aria-selected="false" data-accent="158">Emerald</button>
+        <button class="seg-btn" role="tab" aria-selected="false" data-accent="25">Amber</button>
+      </div>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:18px;">
+      <span style="width:140px; font-weight:600; color:var(--ink-2);">Volume <b id="volVal">65%</b></span>
+      <div class="slider" id="vol" role="slider" aria-label="Volume" aria-valuemin="0" aria-valuemax="100" aria-valuenow="65" tabindex="0">
+        <div class="track"><div class="fill" id="volFill" style="width:65%"></div></div>
+        <div class="thumb" id="volThumb" style="left:65%"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Settings List & Overlays -->
+  <section class="two">
+    <div class="list lg">
+      <div class="row"><span class="ic" style="--ic:#0a84ff"><svg class="ic ic-s" aria-hidden="true"><use href="#i-plane"/></svg></span><span class="rw"><b>Airplane Mode</b><small>Radio isolation</small></span><button class="tgl" role="switch" aria-checked="false" aria-label="Airplane Mode"><span class="knob"></span></button></div>
+      <div class="row"><span class="ic" style="--ic:#34c759"><svg class="ic ic-s" aria-hidden="true"><use href="#i-wifi"/></svg></span><span class="rw"><b>Wi-Fi</b><small>LiquidGlass-5G</small></span><button class="tgl" role="switch" aria-checked="true" aria-label="Wi-Fi"><span class="knob"></span></button></div>
+      <div class="row"><span class="ic" style="--ic:#0a84ff"><svg class="ic ic-s" aria-hidden="true"><use href="#i-bluetooth"/></svg></span><span class="rw"><b>Bluetooth</b><small>Spatial Audio Connected</small></span><span class="bdg">On</span></div>
+      <div class="row"><span class="ic" style="--ic:#ff453a"><svg class="ic ic-s" aria-hidden="true"><use href="#i-bell"/></svg></span><span class="rw"><b>Notifications</b><small>WWDC 2025 Spec Active</small></span><span class="bdg bdg-red">3</span></div>
+    </div>
+
+    <div class="card lg">
+      <h4 style="margin:0 0 12px; font-weight:700;">Interactive Overlay Triggers</h4>
+      <div class="btnrow" style="margin-bottom:12px">
+        <button class="btn btn-primary" id="btnToast">Trigger Toast</button>
+        <button class="btn btn-glass" id="menuTrig" data-tip="Open Glass Menu" aria-haspopup="menu">Actions Menu</button>
+      </div>
+      <div class="btnrow">
+        <button class="btn btn-soft" id="btnInfo" data-tip="I am an edge-clamped glass tooltip!">Hover Tooltip</button>
+        <button class="btn btn-danger" id="btnDanger">Delete Item</button>
+      </div>
+    </div>
+  </section>
+
+  <p class="foot">
+    Refraction &middot; Specular Sheen &middot; Dynamic Tint &middot; Interruptible Springs.<br>
+    Crafted with Vanilla HTML, CSS & JS &middot; No framework dependencies.
+  </p>
+</main>
+
+<!-- Floating Glass Tab Bar -->
+<nav class="tabbar lg lg-frosted" id="tabbar" role="tablist" aria-label="Primary Navigation">
+  <div class="lg-refract" aria-hidden="true"></div>
+  <div class="pill" id="tabPill" aria-hidden="true"></div>
+  <button class="tab" role="tab" aria-selected="true" data-hue="215"><span class="ico"><svg class="ic" aria-hidden="true"><use href="#i-home"/></svg></span><span>Home</span></button>
+  <button class="tab" role="tab" aria-selected="false" data-hue="265"><span class="ico"><svg class="ic" aria-hidden="true"><use href="#i-grid"/></svg></span><span>Browse</span></button>
+  <button class="tab" role="tab" aria-selected="false" data-hue="330"><span class="ico"><svg class="ic" aria-hidden="true"><use href="#i-music"/></svg></span><span>Music</span></button>
+  <button class="tab" role="tab" aria-selected="false" data-hue="160"><span class="ico"><svg class="ic" aria-hidden="true"><use href="#i-wallet"/></svg></span><span>Wallet</span></button>
+  <button class="tab" role="tab" aria-selected="false" data-hue="28"><span class="ico"><svg class="ic" aria-hidden="true"><use href="#i-sliders"/></svg></span><span>Settings</span></button>
+</nav>
+
+<!-- Overlays -->
+<div class="scrim" id="scrim" data-closed></div>
+
+<div class="menu lg" id="menu" role="menu" data-closed>
+  <button class="mi" role="menuitem" data-act="Duplicated"><svg class="ic" aria-hidden="true"><use href="#i-duplicate"/></svg><span>Duplicate</span><kbd>⌘D</kbd></button>
+  <button class="mi" role="menuitem" data-act="Renamed"><svg class="ic" aria-hidden="true"><use href="#i-doc"/></svg><span>Rename</span></button>
+  <button class="mi" role="menuitem" data-act="Shared"><svg class="ic" aria-hidden="true"><use href="#i-share"/></svg><span>Share...</span></button>
+  <div class="mi-sep"></div>
+  <button class="mi danger" role="menuitem" data-act="Moved to Trash"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg><span>Move to Trash</span></button>
+</div>
+
+<div class="sheet lg" id="sheet" role="dialog" aria-modal="true" aria-label="Details" aria-hidden="true" style="transform: translateX(-50%) translateY(120%)">
+  <div class="lg-refract" aria-hidden="true"></div>
+  <div class="grab" id="sheetGrab" aria-hidden="true"><div class="handle"></div></div>
+  <div class="s-body">
+    <h3 class="s-t">Drag-to-Dismiss Glass Sheet</h3>
+    <p class="s-c">Drag the handle downward to dismiss. It features 1:1 touch tracking with progressive rubber-banding past boundaries, inheriting flick release velocity into spring physics.</p>
+    <div class="list lg-clear">
+      <div class="row"><span class="ic" style="--ic:#0a84ff"><svg class="ic ic-s" aria-hidden="true"><use href="#i-wallet"/></svg></span><span class="rw"><b>Apple Pay</b><small>Visa &middot;&middot;&middot; 8842</small></span><svg class="ic chev" aria-hidden="true"><use href="#i-chevron"/></svg></div>
+      <div class="row"><span class="ic" style="--ic:#34c759"><svg class="ic ic-s" aria-hidden="true"><use href="#i-wifi"/></svg></span><span class="rw"><b>Wi-Fi Network</b><small>LiquidGlass-5G</small></span><svg class="ic chev" aria-hidden="true"><use href="#i-chevron"/></svg></div>
+    </div>
+    <button class="btn btn-primary s-done" id="sheetDone">Done</button>
+  </div>
+</div>
+
+<div class="palette lg" id="palette" role="dialog" aria-modal="true" aria-label="Command palette" data-closed>
+  <div class="pal-in">
+    <svg class="ic" aria-hidden="true"><use href="#i-search"/></svg>
+    <input id="palInput" placeholder="What would you like to do?" aria-label="Command palette" autocomplete="off">
+    <kbd class="kbd">ESC</kbd>
+  </div>
+  <div class="pal-list" id="palList" role="listbox"></div>
+  <div class="pal-foot"><span>↑↓ navigate</span><span>↵ run</span><span>esc close</span></div>
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<div class="tip" id="tip" role="tooltip" data-closed><span class="tip-in"></span></div>
+
+<!-- SVG Filter Defs & Icon Symbols -->
+<svg class="defs" aria-hidden="true" focusable="false">
+  <defs>
+    <filter id="lg-disp" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="b"/>
+      <feColorMatrix in="b" type="saturate" values="1.25" result="s"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.0028 0.0036" numOctaves="2" seed="7" result="n"/>
+      <feDisplacementMap in="s" in2="n" scale="18" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M3.5 10.5 12 3l8.5 7.5"/><path d="M5.5 9.8V19a1.5 1.5 0 0 0 1.5 1.5h10A1.5 1.5 0 0 0 18.5 19V9.8"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7.5" height="7.5" rx="2"/><rect x="13" y="3.5" width="7.5" height="7.5" rx="2"/><rect x="3.5" y="13" width="7.5" height="7.5" rx="2"/><rect x="13" y="13" width="7.5" height="7.5" rx="2"/></symbol>
+    <symbol id="i-music" viewBox="0 0 24 24"><path d="M9.5 18.2V5.9L18 4.4v11.6"/><circle cx="7.4" cy="18.2" r="2.4"/><circle cx="15.9" cy="16" r="2.4"/></symbol>
+    <symbol id="i-wallet" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2.8"/><path d="M3 9.8h18"/><circle cx="16" cy="14" r="1.1"/></symbol>
+    <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7.2h16M4 12h16M4 16.8h16"/><circle class="ic-slider-knob" cx="9.5" cy="7.2" r="2.4"/><circle class="ic-slider-knob" cx="14.5" cy="12" r="2.4"/><circle class="ic-slider-knob" cx="8" cy="16.8" r="2.4"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M15.8 15.8 20 20"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.8v2M12 19.2v2M2.8 12h2M19.2 12h2M5.5 5.5l1.4 1.4M17.1 17.1l1.4 1.4M18.5 5.5l-1.4 1.4M6.9 17.1l-1.4 1.4"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 13.6A8.2 8.2 0 0 1 10.4 4 8.2 8.2 0 1 0 20 13.6Z"/></symbol>
+    <symbol id="i-cmd" viewBox="0 0 24 24"><path d="M18 3a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3H6a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3V6a3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3h12a3 3 0 0 0 3-3 3 3 0 0 0-3-3Z"/></symbol>
+    <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3.5 13.9 9.1 19.5 11 13.9 12.9 12 18.5 10.1 12.9 4.5 11 10.1 9.1Z"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8.2 5.6v12.8L18.5 12Z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20.2s-7.4-4.7-9.4-9.2A5.2 5.2 0 0 1 12 7.1a5.2 5.2 0 0 1 9.4 3.9c-2 4.5-9.4 9.2-9.4 9.2Z"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M12 3.6a5.6 5.6 0 0 1 5.6 5.6v3.6l1.8 2.6H4.6l1.8-2.6V9.2A5.6 5.6 0 0 1 12 3.6Z"/><path d="M10 18.6a2.2 2.2 0 0 0 4 0"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 5.5 6.5 6.5L9 18.5"/></symbol>
+    <symbol id="i-plane" viewBox="0 0 24 24"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></symbol>
+    <symbol id="i-wifi" viewBox="0 0 24 24"><path d="M2.5 9.2a15 15 0 0 1 19 0M5.6 12.6a10.4 10.4 0 0 1 12.8 0M8.7 15.9a5.9 5.9 0 0 1 6.6 0"/><circle cx="12" cy="19" r="1.1"/></symbol>
+    <symbol id="i-bluetooth" viewBox="0 0 24 24"><path d="m7 7 10 10-5 5V2l5 5L7 17"/></symbol>
+    <symbol id="i-sleep" viewBox="0 0 24 24"><path d="M12 3.5a8.5 8.5 0 1 0 8.5 8.5A7 7 0 0 1 12 3.5Z"/></symbol>
+    <symbol id="i-doc" viewBox="0 0 24 24"><path d="M7 3.5h6.5L18.5 8v12a1.5 1.5 0 0 1-1.5 1.5H7A1.5 1.5 0 0 1 5.5 20V5A1.5 1.5 0 0 1 7 3.5Z"/><path d="M13.5 3.5V8H18"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 3.5v11.5M8 7.5 12 3.5l4 4"/><path d="M5.5 13.5V19a1.5 1.5 0 0 0 1.5 1.5h10A1.5 1.5 0 0 0 18.5 19v-5.5"/></symbol>
+    <symbol id="i-duplicate" viewBox="0 0 24 24"><rect x="9" y="9" width="11.5" height="11.5" rx="2.5"/><path d="M15 9V5.5A1.5 1.5 0 0 0 13.5 4h-9A1.5 1.5 0 0 0 3 5.5v9A1.5 1.5 0 0 0 4.5 16H8"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4.5 6.8h15M9.5 6.8V5a1.2 1.2 0 0 1 1.2-1.2h2.6A1.2 1.2 0 0 1 14.5 5v1.8M6.6 6.8 7.5 19a1.6 1.6 0 0 0 1.6 1.5h5.8A1.6 1.6 0 0 0 16.5 19l.9-12.2"/></symbol>
+    <symbol id="i-steps" viewBox="0 0 24 24"><path d="M3 13h3l2.5-6 3 9 2.5-4.5H21"/></symbol>
+    <symbol id="i-github" viewBox="0 0 24 24"><path d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.1-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5A10 10 0 0 0 22 12A10 10 0 0 0 12 2Z" fill="currentColor" stroke="none"/></symbol>
+  </defs>
+</svg>
+
+<!-- Application JavaScript (Physics Spring Engine & Interactions) -->
+<script>
+(() => {
+'use strict';
+
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const FINE = matchMedia('(pointer: fine)').matches;
+const root = document.documentElement;
+
+/* Single rAF Scheduler for Spring Solver and Ambient Parallax */
+let rafId = null;
+let lastT = performance.now();
+function wake() { if (rafId === null) rafId = requestAnimationFrame(loop); }
+
+/* Spring Engine */
+const springs = new Map();
+function springSet(key, target, opts) {
+  opts = opts || {};
+  let s = springs.get(key);
+  if (!s) {
+    s = { v: opts.initialV || 0, x: opts.initial !== undefined ? opts.initial : target,
+          k: opts.k || 260, c: opts.c || 28, m: opts.m || 1,
+          onUpdate: opts.onUpdate, onDone: opts.onDone };
+    springs.set(key, s);
+  } else {
+    s.k = opts.k || s.k; s.c = opts.c || s.c; s.m = opts.m || s.m;
+    if (opts.onUpdate) s.onUpdate = opts.onUpdate;
+    if (opts.onDone) s.onDone = opts.onDone;
+  }
+  s.target = target;
+  if (RM) {
+    s.x = target; s.v = 0;
+    if (s.onUpdate) s.onUpdate(target);
+    if (s.onDone) s.onDone();
+    springs.delete(key);
+    return;
+  }
+  wake();
+}
+
+function loop(now) {
+  rafId = null;
+  const dt = Math.min((now - lastT) / 1000, 1 / 30);
+  lastT = now;
+
+  /* Spring integrations */
+  for (const [key, s] of springs) {
+    const dx = s.target - s.x;
+    if (Math.abs(dx) < 0.02 && Math.abs(s.v) < 0.02) {
+      if (s.onUpdate) s.onUpdate(s.target);
+      if (s.onDone) s.onDone();
+      springs.delete(key);
+      continue;
+    }
+    const a = (-s.k * dx - s.c * s.v) / s.m;
+    s.v += a * dt;
+    s.x += s.v * dt;
+    if (s.onUpdate) s.onUpdate(s.x);
+  }
+
+  /* Ambient Parallax Drift */
+  if (!RM && !document.hidden) {
+    orbs[0].style.transform = 'translate3d(' +
+      (Math.sin(now * 0.0004) * 26 + mpx * 18).toFixed(1) + 'px,' +
+      (Math.cos(now * 0.00031) * 18 + mpy * 14).toFixed(1) + 'px,0)';
+    orbs[1].style.transform = 'translate3d(' +
+      (Math.cos(now * 0.00027) * 30 + mpx * -12).toFixed(1) + 'px,' +
+      (Math.sin(now * 0.00036) * 22 + mpy * -16).toFixed(1) + 'px,0)';
+    
+    const f = 1 - Math.exp(-dt * 10);
+    parX += (mpx * -9 - parX) * f;
+    parY += (mpy * -6 - parY) * f;
+    for (const el of refracts) {
+      el.style.setProperty('--rx', parX.toFixed(1) + 'px');
+      el.style.setProperty('--ry', parY.toFixed(1) + 'px');
+    }
+    titleS += (titleST - titleS) * (1 - Math.exp(-dt * 12));
+    largeTitle.style.transform = 'scale(' + titleS.toFixed(4) + ')';
+  }
+
+  if (springs.size > 0 || (!RM && !document.hidden)) wake();
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
+  } else if (!RM) wake();
+});
+
+/* Dynamic Accent Wash */
+let accHue = 215;
+function setAccent(h, instant) {
+  let t = h;
+  while (t - accHue > 180) t -= 360;
+  while (t - accHue < -180) t += 360;
+  if (instant || RM) {
+    accHue = t;
+    root.style.setProperty('--accent-h', String(((t % 360) + 360) % 360));
+    return;
+  }
+  springSet('accent', t, {
+    k: 110, c: 22, initial: accHue,
+    onUpdate: v => {
+      accHue = v;
+      root.style.setProperty('--accent-h', String(((v % 360) + 360) % 360));
+    }
+  });
+}
+
+/* Theme Management */
+const veil = $('#veil');
+const themeBtn = $('#themeBtn');
+function syncThemeIcons() {
+  themeBtn.querySelector('.sun-ic').hidden = root.dataset.theme === 'dark';
+  themeBtn.querySelector('.moon-ic').hidden = root.dataset.theme !== 'dark';
+}
+function toggleTheme() {
+  const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+  veil.style.background = next === 'dark' ? '#0d1119' : '#eef2f8';
+  veil.style.transition = 'none';
+  veil.style.opacity = '0.55';
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    root.dataset.theme = next;
+    veil.style.transition = 'opacity .28s ease';
+    veil.style.opacity = '0';
+  }));
+  syncThemeIcons();
+  try { localStorage.setItem('lg-theme', next); } catch (e) {}
+}
+themeBtn.addEventListener('click', toggleTheme);
+
+/* Wallpaper Environment Picker */
+$$('.wp-chip').forEach(chip => chip.addEventListener('click', () => {
+  $$('.wp-chip').forEach(c => c.classList.remove('active'));
+  chip.classList.add('active');
+  const wp = chip.dataset.wp;
+  root.style.setProperty('--wallpaper', 'var(--' + wp + ')');
+  toast('Environment Changed', 'Switched wallpaper to ' + chip.textContent);
+}));
+
+/* Toast System */
+function toast(title, msg, icon) {
+  const wrap = $('#toasts');
+  const el = document.createElement('div');
+  el.className = 'toast lg';
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'ic t-ic');
+  svg.setAttribute('aria-hidden', 'true');
+  const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+  use.setAttribute('href', '#' + (icon || 'i-sparkle'));
+  svg.appendChild(use);
+  const txt = document.createElement('span');
+  txt.className = 't-tx';
+  const b = document.createElement('b');
+  b.textContent = title;
+  txt.appendChild(b);
+  if (msg) {
+    const small = document.createElement('small');
+    small.textContent = msg;
+    txt.appendChild(small);
+  }
+  el.appendChild(svg);
+  el.appendChild(txt);
+  wrap.appendChild(el);
+  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('in')));
+  setTimeout(() => {
+    el.classList.remove('in');
+    setTimeout(() => el.remove(), 450);
+  }, 3800);
+}
+
+/* Scroll Lock */
+let locks = 0;
+function lockScroll(on) {
+  locks = Math.max(0, locks + (on ? 1 : -1));
+  document.body.style.overflow = locks ? 'hidden' : '';
+  document.body.style.overscrollBehavior = locks ? 'none' : '';
+}
+
+/* Floating Tab Bar */
+const tabbar = $('#tabbar');
+const tabPill = $('#tabPill');
+const tabs = $$('#tabbar .tab');
+let pillX = 0, pillW = 72;
+function movePill(tab, instant) {
+  const b = tabbar.getBoundingClientRect();
+  const r = tab.getBoundingClientRect();
+  const x = r.left - b.left;
+  const w = r.width;
+  if (instant || RM) {
+    pillX = x; pillW = w;
+    tabPill.style.transform = 'translateX(' + x + 'px)';
+    tabPill.style.width = w + 'px';
+    return;
+  }
+  springSet('pillX', x, { k: 460, c: 46, initial: pillX,
+    onUpdate: v => { pillX = v; tabPill.style.transform = 'translateX(' + v + 'px)'; } });
+  springSet('pillW', w, { k: 460, c: 46, initial: pillW,
+    onUpdate: v => { pillW = v; tabPill.style.width = v + 'px'; } });
+}
+function selectTab(i, instant) {
+  tabs.forEach((t, j) => {
+    t.setAttribute('aria-selected', String(i === j));
+    t.tabIndex = i === j ? 0 : -1;
+  });
+  movePill(tabs[i], instant);
+  setAccent(parseInt(tabs[i].dataset.hue, 10), instant);
+}
+tabs.forEach((t, i) => t.addEventListener('click', () => selectTab(i)));
+
+/* Top Nav Scroll Transition */
+const largeTitle = $('#largeTitle');
+const subtitle = $('#subtitle');
+const topbar = $('#topbar');
+let titleS = 1, titleST = 1;
+addEventListener('scroll', () => {
+  const p = clamp(scrollY / 70, 0, 1);
+  titleST = 1 - 0.36 * p;
+  if (RM) largeTitle.style.transform = 'scale(' + titleST.toFixed(4) + ')';
+  subtitle.style.opacity = String(1 - p);
+  topbar.classList.toggle('scrolled', scrollY > 24);
+}, { passive: true });
+
+/* Segmented Control */
+const seg = $('#seg');
+const segInd = $('#segInd');
+const segBtns = $$('#seg .seg-btn');
+let segX = 0, segW = 0;
+function moveSeg(btn, instant) {
+  const b = seg.getBoundingClientRect();
+  const r = btn.getBoundingClientRect();
+  const x = r.left - b.left;
+  const w = r.width;
+  if (instant || RM) {
+    segX = x; segW = w;
+    segInd.style.transform = 'translateX(' + x + 'px)';
+    segInd.style.width = w + 'px';
+    return;
+  }
+  springSet('segX', x, { k: 460, c: 46, initial: segX,
+    onUpdate: v => { segX = v; segInd.style.transform = 'translateX(' + v + 'px)'; } });
+  springSet('segW', w, { k: 460, c: 46, initial: segW || 1,
+    onUpdate: v => { segW = v; segInd.style.width = v + 'px'; } });
+}
+segBtns.forEach(btn => btn.addEventListener('click', () => {
+  segBtns.forEach(b => b.setAttribute('aria-selected', String(b === btn)));
+  moveSeg(btn);
+  setAccent(parseInt(btn.dataset.accent, 10));
+}));
+
+/* Volume Slider */
+const vol = $('#vol');
+const volFill = $('#volFill');
+const volThumb = $('#volThumb');
+const volVal = $('#volVal');
+let volPct = 0.65, volDrag = false;
+function setVol(p) {
+  volPct = clamp(p, 0, 1);
+  volFill.style.width = (volPct * 100) + '%';
+  volThumb.style.left = (volPct * 100) + '%';
+  vol.setAttribute('aria-valuenow', String(Math.round(volPct * 100)));
+  volVal.textContent = Math.round(volPct * 100) + '%';
+}
+vol.addEventListener('pointerdown', e => {
+  volDrag = true; vol.setPointerCapture(e.pointerId); vol.classList.add('drag');
+  const r = vol.getBoundingClientRect(); setVol((e.clientX - r.left) / r.width);
+});
+vol.addEventListener('pointermove', e => {
+  if (!volDrag) return;
+  const r = vol.getBoundingClientRect(); setVol((e.clientX - r.left) / r.width);
+});
+['pointerup', 'pointercancel'].forEach(ev => vol.addEventListener(ev, () => {
+  volDrag = false; vol.classList.remove('drag');
+}));
+
+/* Optics Inspector Sliders */
+function bindSlider(id, min, max, initial, updateFn) {
+  const el = $('#' + id);
+  if (!el) return;
+  const fill = el.querySelector('.fill');
+  const thumb = el.querySelector('.thumb');
+  let val = initial, drag = false;
+  function update(v) {
+    val = clamp(v, min, max);
+    const p = (val - min) / (max - min);
+    fill.style.width = (p * 100) + '%';
+    thumb.style.left = (p * 100) + '%';
+    el.setAttribute('aria-valuenow', String(Math.round(val)));
+    updateFn(val);
+  }
+  el.addEventListener('pointerdown', e => {
+    drag = true; el.setPointerCapture(e.pointerId); el.classList.add('drag');
+    const r = el.getBoundingClientRect(); update(min + ((e.clientX - r.left) / r.width) * (max - min));
+  });
+  el.addEventListener('pointermove', e => {
+    if (!drag) return;
+    const r = el.getBoundingClientRect(); update(min + ((e.clientX - r.left) / r.width) * (max - min));
+  });
+  ['pointerup', 'pointercancel'].forEach(ev => el.addEventListener(ev, () => { drag = false; el.classList.remove('drag'); }));
+}
+
+bindSlider('blurSlider', 0, 60, 22, v => {
+  root.style.setProperty('--blur-regular', Math.round(v) + 'px');
+  $('#blurVal').textContent = Math.round(v) + 'px';
+});
+bindSlider('satSlider', 100, 250, 175, v => {
+  root.style.setProperty('--sat-regular', Math.round(v) + '%');
+  $('#satVal').textContent = Math.round(v) + '%';
+});
+bindSlider('glareSlider', 0, 100, 55, v => {
+  $('#glareVal').textContent = Math.round(v) + '%';
+});
+
+/* Copy CSS Snippet Button */
+$('#copyCssBtn').addEventListener('click', () => {
+  const cssText = `.lg {
+  position: relative;
+  border-radius: 24px;
+  border: 1px solid transparent;
+  background:
+    linear-gradient(hsl(var(--accent-h) 95% 62% / .045), hsl(var(--accent-h) 95% 62% / .045)) padding-box,
+    linear-gradient(150deg, rgba(255,255,255,.60), rgba(255,255,255,.28) 45%, rgba(255,255,255,.16)) padding-box,
+    linear-gradient(160deg, rgba(255,255,255,.92), rgba(255,255,255,.32) 38%, rgba(255,255,255,.07) 66%, rgba(255,255,255,.30) 100%) border-box;
+  -webkit-backdrop-filter: blur(22px) saturate(175%);
+  backdrop-filter: blur(22px) saturate(175%);
+  box-shadow: 0 1px 2px rgba(23,28,44,.05), 0 10px 30px -10px rgba(23,28,44,.25), 0 28px 60px -24px rgba(23,28,44,.20);
+}`;
+  navigator.clipboard.writeText(cssText).then(() => {
+    toast('Copied to Clipboard', 'Liquid Glass CSS spec copied.');
+  });
+});
+
+/* Toggles */
+$$('.tgl').forEach(t => t.addEventListener('click', () => {
+  t.setAttribute('aria-checked', String(t.getAttribute('aria-checked') !== 'true'));
+}));
+
+/* Glass Menu Overlays */
+const menu = $('#menu');
+const menuTrig = $('#menuTrig');
+function menuOpen() { return !menu.hasAttribute('data-closed'); }
+function openMenu() {
+  const r = menuTrig.getBoundingClientRect();
+  menu.style.left = Math.min(r.left, innerWidth - 250) + 'px';
+  menu.style.top = (r.bottom + 10) + 'px';
+  menu.removeAttribute('data-closed');
+  menu.inert = false;
+  menuTrig.setAttribute('aria-expanded', 'true');
+}
+function closeMenu() {
+  menu.setAttribute('data-closed', '');
+  menu.inert = true;
+  menuTrig.setAttribute('aria-expanded', 'false');
+}
+menuTrig.addEventListener('click', e => {
+  e.stopPropagation();
+  if (menuOpen()) closeMenu(); else openMenu();
+});
+$$('#menu .mi').forEach(mi => mi.addEventListener('click', () => {
+  closeMenu();
+  toast('Action Completed', mi.dataset.act + ' from the glass menu.');
+}));
+document.addEventListener('pointerdown', e => {
+  if (menuOpen() && !menu.contains(e.target) && !menuTrig.contains(e.target)) closeMenu();
+});
+
+/* Tooltip Edge-Clamped */
+const tip = $('#tip');
+const tipIn = $('#tip .tip-in');
+let tipEl = null;
+function showTip(el) {
+  if (tipEl === el) return;
+  tipEl = el;
+  const r = el.getBoundingClientRect();
+  tipIn.textContent = el.dataset.tip;
+  const w = tip.offsetWidth;
+  tip.style.left = clamp(r.left + r.width / 2, w / 2 + 8, innerWidth - w / 2 - 8) + 'px';
+  tip.style.top = (r.top - 8) + 'px';
+  tip.removeAttribute('data-closed');
+}
+function hideTip(el) {
+  if (tipEl === el) { tipEl = null; tip.setAttribute('data-closed', ''); }
+}
+$$('[data-tip]').forEach(el => {
+  el.addEventListener('pointerenter', () => showTip(el));
+  el.addEventListener('pointerleave', () => hideTip(el));
+  el.addEventListener('focus', () => showTip(el));
+  el.addEventListener('blur', () => hideTip(el));
+});
+
+/* Bottom Drag Sheet */
+const sheet = $('#sheet');
+const grab = $('#sheetGrab');
+const scrim = $('#scrim');
+let sheetOpen = false, sheetY = 0, sheetH = 0, sheetScale = 1;
+function applySheet(v) {
+  sheetY = v;
+  sheet.style.transform = 'translateX(-50%) translateY(' + v + 'px) scale(' + sheetScale.toFixed(4) + ')';
+}
+function sheetSpringTo(y, k, c, done, initialV) {
+  springSet('sheet', y, { k: k || 170, c: c || 24, initial: sheetY, initialV: initialV || 0, onUpdate: applySheet, onDone: done });
+}
+function hideSheet() {
+  sheet.setAttribute('aria-hidden', 'true'); sheet.inert = true; sheetScale = 1;
+  applySheet(sheetH + 40);
+  if (!paletteOpen) { scrim.setAttribute('data-closed', ''); scrim.style.opacity = ''; lockScroll(false); }
+}
+function openSheet() {
+  if (sheetOpen) return;
+  closePalette(); closeMenu();
+  sheetH = sheet.offsetHeight;
+  sheet.setAttribute('aria-hidden', 'false'); sheet.inert = false; sheetOpen = true;
+  scrim.removeAttribute('data-closed'); lockScroll(true);
+  if (RM) { sheetScale = 1; applySheet(0); return; }
+  sheetSpringTo(0, 170, 24);
+}
+function closeSheet() {
+  if (!sheetOpen) return;
+  sheetOpen = false;
+  if (RM) { hideSheet(); return; }
+  sheetSpringTo(sheetH + 60, 160, 26, hideSheet);
+}
+let drag = null;
+grab.addEventListener('pointerdown', e => {
+  if (!sheetOpen) return;
+  springs.delete('sheet'); springs.delete('sheetS');
+  drag = { y: e.clientY, lastY: e.clientY, lastT: performance.now(), v: 0 };
+  grab.setPointerCapture(e.pointerId); scrim.style.transition = 'none';
+});
+grab.addEventListener('pointermove', e => {
+  if (!drag) return;
+  const now = performance.now();
+  const dy = Math.max(0, e.clientY - drag.y);
+  drag.v = (e.clientY - drag.lastY) / Math.max(1, now - drag.lastT) * 1000;
+  drag.lastY = e.clientY; drag.lastT = now;
+  const rubber = sheetH * 0.5;
+  const y = dy <= rubber ? dy : rubber + (dy - rubber) * 0.35;
+  sheetScale = 1 - Math.min(y, 900) / 9000;
+  applySheet(y);
+  scrim.style.opacity = String(clamp(1 - y / (sheetH * 0.5), 0, 1));
+});
+function endDrag() {
+  if (!drag) return;
+  const vy = drag.v, y = sheetY;
+  scrim.style.transition = ''; drag = null;
+  if (!RM) springSet('sheetS', 1, { k: 170, c: 24, onUpdate: v => {
+    sheetScale = v; sheet.style.transform = 'translateX(-50%) translateY(' + sheetY + 'px) scale(' + v.toFixed(4) + ')';
+  } });
+  if (y > sheetH * 0.25 || (y > 20 && vy > 800)) {
+    sheetOpen = false;
+    if (RM) { sheetScale = 1; hideSheet(); return; }
+    springSet('sheet', sheetH + 80, { k: 160, c: 24, initial: y, initialV: vy, onUpdate: v => {
+      applySheet(v); scrim.style.opacity = String(clamp(1 - v / (sheetH * 0.5), 0, 1));
+    }, onDone: hideSheet });
+  } else if (RM) {
+    sheetScale = 1; applySheet(0); scrim.style.opacity = '';
+  } else {
+    sheetSpringTo(0, 170, 24, null, vy); scrim.style.opacity = '';
+  }
+}
+grab.addEventListener('pointerup', endDrag);
+grab.addEventListener('pointercancel', endDrag);
+scrim.addEventListener('click', () => {
+  if (paletteOpen) closePalette();
+  else if (sheetOpen) closeSheet();
+});
+
+/* Command Palette (⌘K) */
+const palette = $('#palette');
+const palInput = $('#palInput');
+const palList = $('#palList');
+let paletteOpen = false, palIdx = 0;
+const PAL = [
+  { icon: 'i-moon', label: 'Toggle dark / light theme', run: () => toggleTheme() },
+  { icon: 'i-sparkle', label: 'Set Accent — Violet', run: () => setAccent(275) },
+  { icon: 'i-sparkle', label: 'Set Accent — Emerald', run: () => setAccent(158) },
+  { icon: 'i-sparkle', label: 'Set Accent — Blue', run: () => setAccent(215) },
+  { icon: 'i-chevron', label: 'Present Bottom Sheet', run: () => openSheet() },
+  { icon: 'i-bell', label: 'Show Toast Notification', run: () => toast('Command Palette', 'Executed command cleanly.') },
+  { icon: 'i-home', label: 'Switch to Home Tab', run: () => selectTab(0) },
+  { icon: 'i-sliders', label: 'Jump to Controls Panel', run: () => $('#controls').scrollIntoView({ behavior: RM ? 'auto' : 'smooth', block: 'center' }) }
+];
+function renderPal() {
+  const q = palInput.value.trim().toLowerCase();
+  const items = PAL.filter(it => it.label.toLowerCase().indexOf(q) !== -1);
+  palIdx = Math.min(palIdx, Math.max(0, items.length - 1));
+  if (!items.length) {
+    palList.innerHTML = '<div class="pi empty">No matching commands</div>'; return;
+  }
+  palList.innerHTML = items.map((it, i) =>
+    '<button class="pi" role="option" aria-selected="' + (i === palIdx) + '" data-i="' + i + '">' +
+    '<svg class="ic" aria-hidden="true"><use href="#' + it.icon + '"/></svg><span>' + it.label + '</span></button>'
+  ).join('');
+  $$('#palList .pi[role="option"]').forEach(b => b.addEventListener('click', () => {
+    const it = items[parseInt(b.dataset.i, 10)];
+    closePalette(); it.run();
+  }));
+  const sel = palList.querySelector('[aria-selected="true"]');
+  if (sel) sel.scrollIntoView({ block: 'nearest' });
+}
+function openPalette() {
+  if (paletteOpen) return;
+  closeSheet(); closeMenu();
+  paletteOpen = true; palette.removeAttribute('data-closed'); palette.inert = false;
+  scrim.removeAttribute('data-closed'); lockScroll(true);
+  palInput.value = ''; palIdx = 0; renderPal();
+  setTimeout(() => palInput.focus(), 60);
+}
+function closePalette() {
+  if (!paletteOpen) return;
+  paletteOpen = false; palette.setAttribute('data-closed', ''); palette.inert = true;
+  if (!sheetOpen) { scrim.setAttribute('data-closed', ''); lockScroll(false); }
+  palInput.blur();
+}
+palInput.addEventListener('input', renderPal);
+palInput.addEventListener('keydown', e => {
+  const n = $$('#palList .pi[role="option"]').length;
+  if (e.key === 'ArrowDown') { e.preventDefault(); palIdx = (palIdx + 1) % Math.max(1, n); renderPal(); }
+  if (e.key === 'ArrowUp') { e.preventDefault(); palIdx = (palIdx - 1 + Math.max(1, n)) % Math.max(1, n); renderPal(); }
+  if (e.key === 'Enter') { const b = palList.querySelector('[data-i="' + palIdx + '"]'); if (b) b.click(); }
+});
+function togglePalette() { if (paletteOpen) closePalette(); else openPalette(); }
+$('#paletteBtn').addEventListener('click', togglePalette);
+$('#searchTrigger').addEventListener('click', openPalette);
+
+/* 3D Tilt Cards */
+if (FINE && !RM) {
+  $$('[data-tilt]').forEach((card, i) => {
+    const kx = 'tiltx' + i, ky = 'tilty' + i, kz = 'tiltz' + i;
+    let rect = null;
+    card.addEventListener('pointerenter', () => {
+      rect = card.getBoundingClientRect();
+      springSet(kz, 1.02, { k: 300, c: 34, initial: 1, onUpdate: v => card.style.setProperty('--zs', v.toFixed(3)) });
+    });
+    card.addEventListener('pointerleave', () => {
+      rect = null;
+      springSet(kx, 0, { k: 130, c: 22, onUpdate: v => card.style.setProperty('--rx', v.toFixed(2) + 'deg') });
+      springSet(ky, 0, { k: 130, c: 22, onUpdate: v => card.style.setProperty('--ry', v.toFixed(2) + 'deg') });
+      springSet(kz, 1, { k: 300, c: 34, onUpdate: v => card.style.setProperty('--zs', v.toFixed(3)) });
+    });
+    card.addEventListener('pointermove', e => {
+      if (!rect) rect = card.getBoundingClientRect();
+      const px = (e.clientX - rect.left) / rect.width;
+      const py = (e.clientY - rect.top) / rect.height;
+      card.style.setProperty('--gx', (px * 100).toFixed(1) + '%');
+      card.style.setProperty('--gy', (py * 100).toFixed(1) + '%');
+      springSet(kx, (py - 0.5) * -8, { k: 130, c: 22, onUpdate: v => card.style.setProperty('--rx', v.toFixed(2) + 'deg') });
+      springSet(ky, (px - 0.5) * 10, { k: 130, c: 22, onUpdate: v => card.style.setProperty('--ry', v.toFixed(2) + 'deg') });
+    });
+  });
+}
+
+/* Ambient Cursor Parallax */
+const orbs = $$('.orb');
+const refracts = $$('.lg-refract');
+let mpx = 0, mpy = 0, parX = 0, parY = 0;
+addEventListener('pointermove', e => {
+  mpx = (e.clientX / innerWidth - 0.5) * 2;
+  mpy = (e.clientY / innerHeight - 0.5) * 2;
+}, { passive: true });
+
+/* Global Keyboard Handlers */
+addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+    e.preventDefault(); togglePalette(); return;
+  }
+  if (e.key === 'Escape') {
+    if (paletteOpen) closePalette();
+    else if (menuOpen()) closeMenu();
+    else if (sheetOpen) closeSheet();
+  }
+});
+
+/* Direct Trigger Bindings */
+$('#heroPrimary').addEventListener('click', () => toast('Portfolio Feature', 'Apple Liquid Glass 1-to-1 recreation initialized.'));
+$('#heroSheet').addEventListener('click', openSheet);
+$('#heroOpticsScroll').addEventListener('click', () => $('#opticsHeader').scrollIntoView({ behavior: 'smooth' }));
+$('#btnToast').addEventListener('click', () => toast('Saved', 'Your changes have been saved cleanly.'));
+$('#sheetDone').addEventListener('click', closeSheet);
+$('#playBtn').addEventListener('click', () => toast('Playing Audio', 'Aurora — Liquid Glass Spatial Preview'));
+$('#btnDanger').addEventListener('click', () => toast('Deleted Item', 'Item moved to trash.', 'i-trash'));
+
+/* Boot Setup */
+if (!root.dataset.theme) root.dataset.theme = 'light';
+syncThemeIcons();
+sheet.inert = true; palette.inert = true; menu.inert = true;
+selectTab(0, true); setAccent(215, true); moveSeg(segBtns[0], true); setVol(0.65);
+wake();
+})();
+</script>
+</body>
+</html>
