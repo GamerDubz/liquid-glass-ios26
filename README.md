@@ -62,18 +62,6 @@ Open `http://localhost:3000` in your browser.
 
 ---
 
-## 🌐 GitHub Pages Hosting
-
-This repository is configured to deploy directly to **GitHub Pages** via GitHub Actions (`.github/workflows/deploy.yml`).
-
-### Enabling GitHub Pages in Repository Settings:
-1. Go to your repository on GitHub: `https://github.com/GamerDubz/liquid-glass-ios26`
-2. Navigate to **Settings** > **Pages**.
-3. Under **Build and deployment** > **Source**, select **GitHub Actions**.
-4. Pushing to `main` will automatically trigger a build and publish your site!
-
----
-
 ## 📄 License
 
 Distributed under the MIT License.
