@@ -2,7 +2,7 @@
 
 [![iOS 26 Spec](https://img.shields.io/badge/Apple_HIG-iOS_26_Liquid_Glass-blue?style=flat-square&logo=apple)](https://developer.apple.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](LICENSE)
-[![Vercel Deployment](https://img.shields.io/badge/Vercel-Auto_Deploy-black?style=flat-square&logo=vercel)](https://vercel.com)
+[![GitHub Pages](https://img.shields.io/badge/GitHub-Pages_Deployment-181717?style=flat-square&logo=github)](https://gamerdubz.github.io/liquid-glass-ios26/)
 
 A 1-to-1 web recreation of Apple's **Liquid Glass material system** (iOS 26 / WWDC 2025). Built with zero framework dependencies (Vanilla HTML, CSS & JavaScript), featuring real-time optical refraction, specular glare tracking, dynamic accent tinting, and interruptible physics springs.
 
@@ -62,20 +62,15 @@ Open `http://localhost:3000` in your browser.
 
 ---
 
-## ☁️ Vercel Deployment
+## 🌐 GitHub Pages Hosting
 
-This project includes a ready-to-use `vercel.json` and a GitHub Actions workflow (`.github/workflows/deploy.yml`).
+This repository is configured to deploy directly to **GitHub Pages** via GitHub Actions (`.github/workflows/deploy.yml`).
 
-### Option 1: Vercel GitHub Integration (Recommended)
-1. Push this repository to GitHub.
-2. Import the project in your [Vercel Dashboard](https://vercel.com/new).
-3. Vercel will automatically detect the static configuration and deploy on every push!
-
-### Option 2: GitHub Actions Workflow
-Set the following secrets in your GitHub Repository settings (`Settings > Secrets and variables > Actions`):
-- `VERCEL_TOKEN`: Your Vercel API token.
-- `ORG_ID`: Your Vercel organization ID.
-- `PROJECT_ID`: Your Vercel project ID.
+### Enabling GitHub Pages in Repository Settings:
+1. Go to your repository on GitHub: `https://github.com/GamerDubz/liquid-glass-ios26`
+2. Navigate to **Settings** > **Pages**.
+3. Under **Build and deployment** > **Source**, select **GitHub Actions**.
+4. Pushing to `main` will automatically trigger a build and publish your site!
 
 ---
 
